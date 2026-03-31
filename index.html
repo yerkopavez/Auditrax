@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auditrax — Control operacional de comunicaciones</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0A1628;--navy2:#111F38;--cyan:#00C2FF;--gold:#F5A623;--red:#E8392A;--green:#00D67F;--white:#F0EDE8;--gray:#8A9BB0;--line:rgba(255,255,255,0.07)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.4}
+header{position:relative;padding:40px 60px 32px;border-bottom:1px solid var(--line);display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+header::after{content:'';position:absolute;bottom:-1px;left:60px;width:120px;height:2px;background:var(--cyan)}
+.logo{display:flex;align-items:flex-end;gap:16px}
+.logo-mark{width:44px;height:44px;border:2px solid var(--cyan);display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:7px}
+.logo-mark span{background:var(--cyan);animation:pulse-mark 2.4s ease-in-out infinite}
+.logo-mark span:nth-child(2){animation-delay:.3s;background:var(--gold)}
+.logo-mark span:nth-child(3){animation-delay:.6s;background:var(--gray);opacity:.4}
+.logo-mark span:nth-child(4){animation-delay:.9s}
+@keyframes pulse-mark{0%,100%{opacity:1}50%{opacity:.3}}
+.logo-text h1{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:4px;color:var(--white);line-height:1}
+.logo-text p{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);margin-top:2px}
+.tag{display:inline-block;padding:4px 12px;border:1px solid var(--gold);color:var(--gold);font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Mono',monospace}
+nav{padding:0 60px;border-bottom:1px solid var(--line);display:flex;gap:0;overflow-x:auto}
+nav::-webkit-scrollbar{display:none}
+.tab-btn{padding:18px 22px;background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);position:relative;white-space:nowrap;transition:color .2s}
+.tab-btn::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--cyan);transform:scaleX(0);transition:transform .3s ease}
+.tab-btn.active{color:var(--white)}.tab-btn.active::after{transform:scaleX(1)}.tab-btn:hover{color:var(--white)}
+.tab-num{font-size:9px;color:var(--cyan);margin-right:6px;opacity:.7}
+.page{display:none;animation:fadein .4s ease}.page.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.container{padding:52px 60px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.card{background:var(--navy2);border:1px solid var(--line);padding:24px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--cyan)}
+.card.gold::before{background:var(--gold)}.card.red::before{background:var(--red)}.card.green::before{background:var(--green)}
+.card-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);margin-bottom:10px}
+.card.gold .card-label{color:var(--gold)}.card.red .card-label{color:var(--red)}.card.green .card-label{color:var(--green)}
+.card h3{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--white);margin-bottom:8px;line-height:1.1}
+.card p{font-size:13px;line-height:1.7;color:var(--gray)}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);margin-bottom:10px}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:2px;line-height:1;color:var(--white);margin-bottom:8px}
+.section-sub{font-size:14px;color:var(--gray);max-width:620px;line-height:1.7;margin-bottom:40px}
+.big-stat{font-family:'Bebas Neue',sans-serif;font-size:64px;letter-spacing:2px;line-height:1;color:var(--cyan)}
+.big-stat.gold{color:var(--gold)}.big-stat.red{color:var(--red)}.big-stat.green{color:var(--green)}
+.divider{height:1px;background:var(--line);margin:40px 0}
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:22px;padding:20px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.step:last-child{border-bottom:none}
+.step-num{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--line);line-height:1;min-width:52px;text-align:right;transition:color .3s}
+.step:hover .step-num{color:var(--cyan)}
+.step-content h4{font-size:14px;font-weight:600;color:var(--white);margin-bottom:5px}
+.step-content p{font-size:13px;color:var(--gray);line-height:1.6}
+.pill{display:inline-block;padding:3px 9px;font-size:10px;letter-spacing:1px;text-transform:uppercase;font-family:'DM Mono',monospace}
+.pill-cyan{background:rgba(0,194,255,.15);color:var(--cyan);border:1px solid rgba(0,194,255,.3)}
+.pill-gold{background:rgba(245,166,35,.15);color:var(--gold);border:1px solid rgba(245,166,35,.3)}
+.pill-green{background:rgba(0,214,127,.15);color:var(--green);border:1px solid rgba(0,214,127,.3)}
+.pill-red{background:rgba(232,57,42,.15);color:var(--red);border:1px solid rgba(232,57,42,.3)}
+.timeline{position:relative;padding-left:30px}
+.timeline::before{content:'';position:absolute;left:8px;top:8px;bottom:8px;width:1px;background:var(--line)}
+.tl-item{position:relative;padding-bottom:28px}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot{position:absolute;left:-26px;top:5px;width:10px;height:10px;border:2px solid var(--cyan);background:var(--navy)}
+.tl-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--cyan);margin-bottom:4px;text-transform:uppercase}
+.tl-title{font-size:14px;font-weight:600;color:var(--white);margin-bottom:4px}
+.tl-desc{font-size:12px;color:var(--gray);line-height:1.6}
+.score-bar{margin:9px 0}
+.score-bar-label{display:flex;justify-content:space-between;font-size:11px;color:var(--gray);margin-bottom:4px;font-family:'DM Mono',monospace}
+.score-track{height:4px;background:var(--line);overflow:hidden}
+.score-fill{height:100%;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.level-chip{display:inline-block;padding:5px 12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;border:1px solid}
+.lc-green{color:var(--green);border-color:var(--green);background:rgba(0,214,127,.08)}
+.lc-gold{color:var(--gold);border-color:var(--gold);background:rgba(245,166,35,.08)}
+.lc-orange{color:#FF8C00;border-color:#FF8C00;background:rgba(255,140,0,.08)}
+.lc-red{color:var(--red);border-color:var(--red);background:rgba(232,57,42,.08)}
+.signal-rings{position:relative;width:80px;height:80px;display:flex;align-items:center;justify-content:center}
+.signal-ring{position:absolute;border-radius:50%;border:1px solid var(--cyan);opacity:0;animation:ring-out 2.4s ease-out infinite}
+.signal-ring:nth-child(1){width:20px;height:20px;animation-delay:0s}
+.signal-ring:nth-child(2){width:40px;height:40px;animation-delay:.5s}
+.signal-ring:nth-child(3){width:60px;height:60px;animation-delay:1s}
+.signal-ring:nth-child(4){width:80px;height:80px;animation-delay:1.5s}
+.signal-dot{width:10px;height:10px;border-radius:50%;background:var(--cyan);z-index:2}
+@keyframes ring-out{0%{opacity:.8;transform:scale(.3)}100%{opacity:0;transform:scale(1)}}
+.waveform{display:flex;align-items:center;gap:3px;height:40px}
+.wave-bar{width:3px;background:var(--cyan);border-radius:2px;animation:wave 1.4s ease-in-out infinite;opacity:.7}
+@keyframes wave{0%,100%{height:8px}50%{height:32px}}
+.incident{background:var(--navy2);border:1px solid var(--line);border-left:3px solid var(--red);padding:18px 22px;margin-bottom:14px}
+.incident-meta{display:flex;gap:14px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.incident-loc{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--red)}
+.incident-date{font-size:11px;color:var(--gray)}
+.incident h4{font-size:14px;font-weight:600;color:var(--white);margin-bottom:5px}
+.incident p{font-size:12px;color:var(--gray);line-height:1.6}
+.incident-cause{display:inline-block;margin-top:8px;padding:3px 10px;background:rgba(232,57,42,.1);border:1px solid rgba(232,57,42,.3);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--red);text-transform:uppercase}
+.report-mockup{background:#0D1E35;border:1px solid var(--line);padding:20px;font-family:'DM Mono',monospace}
+.report-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.report-title{font-size:10px;letter-spacing:2px;color:var(--cyan)}
+.report-date{font-size:10px;color:var(--gray)}
+.report-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px}
+.report-row .rk{color:var(--gray)}.report-row .rv{color:var(--white);font-weight:500}
+.quote{border-left:3px solid var(--gold);padding:18px 26px;background:rgba(245,166,35,.05);margin:24px 0}
+.quote p{font-size:15px;line-height:1.7;color:var(--white);font-style:italic}
+.quote cite{display:block;margin-top:10px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-style:normal;font-family:'DM Mono',monospace}
+.kpi-card{background:var(--navy2);border:1px solid var(--line);padding:18px 22px;text-align:center}
+.kpi-val{font-family:'Bebas Neue',sans-serif;font-size:44px;line-height:1;margin-bottom:4px}
+.kpi-label{font-size:11px;color:var(--gray);line-height:1.4}
+.kpi-sub{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-top:5px}
+.vis-table{width:100%;border-collapse:collapse;font-size:12px;margin:16px 0}
+.vis-table th{background:var(--navy2);padding:10px 14px;text-align:left;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);border-bottom:1px solid var(--line)}
+.vis-table td{padding:10px 14px;border-bottom:1px solid var(--line);color:var(--gray);vertical-align:top}
+.vis-table td strong{color:var(--white)}
+.vis-table tr:hover td{background:rgba(255,255,255,.02)}
+.price-card{background:var(--navy2);border:1px solid var(--line);padding:26px;text-align:center;position:relative}
+.price-card.featured{border-color:var(--cyan)}
+.price-card.featured::before{content:'RECOMENDADO';position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--cyan);color:var(--navy);font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;padding:3px 12px}
+.price-name{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gray);margin-bottom:12px}
+.price-val{font-family:'Bebas Neue',sans-serif;font-size:50px;color:var(--white);line-height:1}
+.price-unit{font-size:12px;color:var(--gray);margin-top:4px;margin-bottom:16px}
+.price-feat{font-size:12px;color:var(--gray);line-height:2.2;border-top:1px solid var(--line);padding-top:14px;text-align:left}
+@media(max-width:900px){header,.container{padding-left:24px;padding-right:24px}nav{padding:0 24px}.grid2,.grid3,.grid4{grid-template-columns:1fr}.section-title{font-size:34px}.big-stat{font-size:48px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark"><span></span><span></span><span></span><span></span></div>
+    <div class="logo-text"><h1>Auditrax</h1><p>Control y auditoría de comunicaciones críticas</p></div>
+  </div>
+  <div style="text-align:right">
+    <span class="tag">Minería · Seguridad · Trazabilidad</span>
+    <div style="margin-top:8px;font-size:11px;color:var(--gray);font-family:'DM Mono',monospace">auditrax.cl</div>
+  </div>
+</header>
+
+<nav>
+  <button class="tab-btn active" onclick="showTab('resumen')"><span class="tab-num">00</span>Resumen ejecutivo</button>
+  <button class="tab-btn" onclick="showTab('problema')"><span class="tab-num">01</span>El problema</button>
+  <button class="tab-btn" onclick="showTab('solucion')"><span class="tab-num">02</span>La solución</button>
+  <button class="tab-btn" onclick="showTab('como')"><span class="tab-num">03</span>Cómo funciona</button>
+  <button class="tab-btn" onclick="showTab('visibilidad')"><span class="tab-num">04</span>Visibilidad</button>
+  <button class="tab-btn" onclick="showTab('entregables')"><span class="tab-num">05</span>Entregables</button>
+  <button class="tab-btn" onclick="showTab('beneficios')"><span class="tab-num">06</span>Beneficios</button>
+  <button class="tab-btn" onclick="showTab('propuesta')"><span class="tab-num">07</span>Propuesta</button>
+</nav>
+
+
+<!-- 00 RESUMEN -->
+<div class="page active" id="page-resumen">
+<div class="container">
+  <div class="section-label">00 — Resumen ejecutivo</div>
+  <div class="section-title">Auditrax convierte interacciones radiales en visibilidad operacional, trazabilidad documentada y mejora continua.</div>
+  <div class="section-sub">Hoy la mayoría de las faenas no mide cómo se cumple el protocolo radial en la práctica. Auditrax captura las interacciones, las interpreta según la lógica operacional de la faena y las transforma en indicadores accionables para operación, seguridad y gestión.</div>
+
+  <div class="grid3" style="margin-bottom:32px">
+    <div class="card red">
+      <div class="card-label">Brecha actual</div>
+      <h3>No se mide</h3>
+      <p>El protocolo existe, pero normalmente no hay indicadores continuos de cumplimiento ni una línea base objetiva para gestionar desvíos.</p>
+    </div>
+    <div class="card red">
+      <div class="card-label">Brecha actual</div>
+      <h3>No se segmenta</h3>
+      <p>Sin una capa analítica, la faena no sabe dónde están las zonas, turnos, procesos o empresas con mayor exposición comunicacional.</p>
+    </div>
+    <div class="card green">
+      <div class="card-label">Con Auditrax</div>
+      <h3>Sí se gestiona</h3>
+      <p>La operación obtiene trazabilidad documentada, reportes automáticos y una base objetiva para priorizar acciones preventivas y mejorar performance.</p>
+    </div>
+  </div>
+
+  <div class="grid4">
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--cyan)">24/7</div><div class="kpi-label">Monitoreo automatizado continuo</div><div class="kpi-sub" style="color:var(--cyan)">Sin intervención humana</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--gold)">&lt;30s</div><div class="kpi-label">Procesamiento estimado</div><div class="kpi-sub" style="color:var(--gold)">Según arquitectura definida</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--green)">ISR</div><div class="kpi-label">Indicador configurable por faena</div><div class="kpi-sub" style="color:var(--green)">Base + protocolo local</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--white)">ID</div><div class="kpi-label">Trazabilidad por radio y canal</div><div class="kpi-sub" style="color:var(--white)">Con reglas de asignación</div></div>
+  </div>
+
+  <div class="divider"></div>
+  <div style="padding:22px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.24)">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--green);margin-bottom:6px">IDEA FUERZA</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--white);line-height:1.05">No se trata de escuchar radios. Se trata de entender cómo se está coordinando la operación y dónde están las oportunidades de mejora.</div>
+  </div>
+</div>
+</div>
+
+<!-- 01 EL PROBLEMA -->
+<div class="page" id="page-problema">
+<div class="container">
+  <div class="section-label">01 — El problema</div>
+  <div class="section-title">Cuando la comunicación falla, el riesgo aumenta.</div>
+  <div class="section-sub">La comunicación radial coordina accesos, movimientos, maniobras y permisos en procesos críticos. El problema no es la ausencia de procedimiento; el problema es que normalmente no existe una medición continua que permita saber si ese procedimiento realmente se está aplicando.</div>
+
+  <div class="section-label" style="margin-top:8px">Eventos con causa directa en comunicación</div>
+
+  <div class="incident">
+    <div class="incident-meta"><span class="incident-loc">Nueva Zelanda · Minería subterránea</span><span class="incident-date">Pike River Mine — Noviembre 2010</span></div>
+    <h4>29 personas fallecidas</h4>
+    <p>La investigación oficial identificó fallas de monitoreo y comunicación como factor contribuyente central. Las señales existían, pero no fueron visibles a tiempo.</p>
+    <span class="incident-cause">Falla de comunicación operacional</span>
+  </div>
+
+  <div class="incident">
+    <div class="incident-meta"><span class="incident-loc">Australia · Safe Work Australia</span><span class="incident-date">Accidentes mineros 2005–2020</span></div>
+    <h4>Colisiones y maniobras mal coordinadas</h4>
+    <p>Los reportes identifican comunicación radial deficiente como patrón recurrente en incidentes entre equipos pesados y vehículos livianos.</p>
+    <span class="incident-cause">Protocolo radial incumplido</span>
+  </div>
+
+  <div class="incident">
+    <div class="incident-meta"><span class="incident-loc">Chile · Minería a cielo abierto</span><span class="incident-date">Evento de alto potencial</span></div>
+    <h4>Colisión cargador frontal / camioneta</h4>
+    <p>La investigación concluyó ausencia de comunicación radial efectiva. Existía procedimiento, pero no había forma de medir ni gestionar su cumplimiento en la práctica.</p>
+    <span class="incident-cause">Ausencia de comunicación radial efectiva</span>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-label">Patrón común observado</div>
+  <div style="margin-top:20px">
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-content"><h4>El protocolo existía, pero no se medía</h4><p>Sin indicador continuo, el cumplimiento se asume. No hay línea base, no hay tendencia y no hay criterio para saber si la disciplina radial está mejorando o empeorando.</p></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-content"><h4>Sin medición no hay gestión preventiva</h4><p>Si no se mide, no se puede anticipar dónde está aumentando el riesgo ni intervenir oportunamente antes de un incidente.</p></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-content"><h4>Sin segmentación no se identifican áreas críticas</h4><p>Aunque se intuya que existe una brecha, no es posible determinar con objetividad qué zonas, procesos, turnos o grupos requieren foco prioritario.</p></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 02 LA SOLUCIÓN -->
+<div class="page" id="page-solucion">
+<div class="container">
+  <div class="section-label">02 — Auditrax</div>
+  <div class="section-title">Transformamos interacciones radiales en control operacional.</div>
+  <div class="section-sub">Hoy ese control normalmente no existe. Auditrax convierte cada interacción radial en un antecedente operacional estructurado, con trazabilidad documentada, indicadores accionables y soporte para mejora continua.</div>
+
+  <div class="quote"><p>"Auditrax convierte interacciones críticas en visibilidad operacional, evidencia documentada y oportunidades concretas de mejora."</p><cite>Auditrax — Principio de diseño</cite></div>
+
+  <div class="grid2" style="margin-bottom:40px">
+    <div>
+      <div style="display:flex;align-items:center;gap:22px;margin-bottom:24px">
+        <div class="signal-rings"><div class="signal-ring"></div><div class="signal-ring"></div><div class="signal-ring"></div><div class="signal-ring"></div><div class="signal-dot"></div></div>
+        <div><div class="section-label" style="margin-bottom:5px">Captura activa</div><p style="font-size:13px;color:var(--gray);line-height:1.6">El sistema opera continuamente sobre los canales definidos, capturando e interpretando interacciones sin exigir cambios en la rutina del usuario final.</p></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-label">Análisis automático</div>
+        <h3>Cada interacción queda documentada</h3>
+        <p>Audio, texto, score, timestamps y metadata quedan estructurados para trazabilidad operativa, análisis posterior y recopilación rápida de antecedentes ante eventos o incidentes.</p>
+      </div>
+      <div class="card gold">
+        <div class="card-label">Segmentación útil</div>
+        <h3>Visibilidad por canal, turno, proceso y empresa</h3>
+        <p>La gestión no se queda en un dato agregado. Auditrax permite ver dónde están las brechas y cómo evoluciona el desempeño comunicacional de la faena.</p>
+      </div>
+    </div>
+    <div>
+      <div style="background:var(--navy2);border:1px solid var(--line);padding:26px;margin-bottom:18px;text-align:center">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--white);line-height:1.3;margin-bottom:10px">"¿Cómo se está coordinando realmente la operación hoy?"</div>
+        <div style="font-size:12px;color:var(--gray);line-height:1.6">Con Auditrax, esa pregunta deja de depender de percepciones y pasa a responderse con trazabilidad documentada e indicadores configurables.</div>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-num">A</div><div class="step-content"><h4>Operación y sala de control <span class="pill pill-cyan" style="margin-left:8px">visualización continua</span></h4><p>Vista operacional del desempeño comunicacional, condiciones detectadas y flujo de interacciones procesadas.</p></div></div>
+        <div class="step"><div class="step-num">B</div><div class="step-content"><h4>Supervisión · HSEC <span class="pill pill-gold" style="margin-left:8px">reportes automáticos</span></h4><p>ISR por canal, turno, proceso y empresa, con foco en oportunidades de mejora y recopilación rápida de antecedentes.</p></div></div>
+        <div class="step"><div class="step-num">C</div><div class="step-content"><h4>Gerencia · mejora continua <span class="pill pill-green" style="margin-left:8px">análisis periódico</span></h4><p>Tendencias, comparativos y soporte para priorizar acciones sobre procesos críticos o segmentos específicos.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="grid4">
+    <div style="text-align:center;padding:18px 0"><div class="big-stat">24/7</div><div style="font-size:12px;color:var(--gray);margin-top:5px">Operación continua</div></div>
+    <div style="text-align:center;padding:18px 0"><div class="big-stat gold">&lt;30s</div><div style="font-size:12px;color:var(--gray);margin-top:5px">Procesamiento estimado</div></div>
+    <div style="text-align:center;padding:18px 0"><div class="big-stat green">0</div><div style="font-size:12px;color:var(--gray);margin-top:5px">Cambios en infraestructura requerida</div></div>
+    <div style="text-align:center;padding:18px 0"><div class="big-stat" style="color:var(--white)">100%</div><div style="font-size:12px;color:var(--gray);margin-top:5px">Trazabilidad documentada</div></div>
+  </div>
+</div>
+</div>
+
+<!-- 03 CÓMO FUNCIONA -->
+<div class="page" id="page-como">
+<div class="container">
+  <div class="section-label">03 — El sistema</div>
+  <div class="section-title">Tres pasos.<br>Un resultado.</div>
+  <div class="section-sub">Auditrax transforma audio radial en antecedentes operacionales estructurados. El proceso es automático y la lógica de evaluación puede configurarse según protocolo, requerimientos y definiciones de cada faena.</div>
+
+  <div class="grid3" style="margin-bottom:40px">
+    <div class="card">
+      <div class="card-label">Paso 1</div>
+      <h3>Captura y detección</h3>
+      <p>El sistema identifica automáticamente cuándo hay actividad en el canal y registra cada interacción desde su inicio hasta su cierre, preservando su contexto temporal y operacional.</p>
+      <div style="margin-top:18px"><div class="waveform"><div class="wave-bar" style="animation-delay:.0s"></div><div class="wave-bar" style="animation-delay:.1s"></div><div class="wave-bar" style="animation-delay:.2s"></div><div class="wave-bar" style="animation-delay:.3s"></div><div class="wave-bar" style="animation-delay:.4s"></div><div class="wave-bar" style="animation-delay:.5s"></div><div class="wave-bar" style="animation-delay:.6s"></div><div class="wave-bar" style="animation-delay:.7s"></div></div></div>
+    </div>
+    <div class="card gold">
+      <div class="card-label">Paso 2</div>
+      <h3>Transcripción contextual</h3>
+      <p>La transcripción no solo convierte audio en texto. También interpreta nomenclatura minera, roles, equipos y parámetros operacionales definidos en el glosario técnico de la faena.</p>
+      <div style="margin-top:18px;font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);background:rgba(245,166,35,.06);padding:12px;line-height:1.8">
+        <div style="color:var(--gray)">Audio →</div>
+        <div>"atento operador patito 3 por aca la pi pi vi 16 favor autorizar el ingreso a su area"</div>
+        <div style="color:var(--gray)">Interpretación técnica →</div>
+        <div>"Atento operador Pato 03 (wheeldozer-03), por acá la PPV16 (camioneta autónoma N°16), favor autorizar ingreso a su área."</div>
+      </div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Paso 3</div>
+      <h3>Índice configurable</h3>
+      <p>Cada interacción se evalúa contra una lógica base que puede ajustarse según protocolo local, prioridades del cliente y criterios definidos para cada proceso crítico.</p>
+      <div style="margin-top:14px">
+        <div class="score-bar"><div class="score-bar-label"><span>Identificación de participantes</span><span style="color:var(--green)">18/20</span></div><div class="score-track"><div class="score-fill" style="width:90%;background:var(--green)"></div></div></div>
+        <div class="score-bar"><div class="score-bar-label"><span>Claridad de la instrucción</span><span style="color:var(--gold)">14/20</span></div><div class="score-track"><div class="score-fill" style="width:70%;background:var(--gold)"></div></div></div>
+        <div class="score-bar"><div class="score-bar-label"><span>Cierre / confirmación</span><span style="color:var(--red)">5/20</span></div><div class="score-track"><div class="score-fill" style="width:25%;background:var(--red)"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-label">Ejemplo base de Índice de Salud Radial (ISR)</div>
+  <div class="section-sub" style="margin-bottom:20px">La estructura mostrada a continuación es referencial. El modelo de evaluación puede adaptarse al protocolo y definiciones operacionales de cada faena.</div>
+  <div style="margin-top:18px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px">
+    <div style="text-align:center;padding:16px;background:var(--navy2);border:1px solid var(--line)"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--cyan)">20</div><div style="font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5">Identificación<br>destinatario</div></div>
+    <div style="text-align:center;padding:16px;background:var(--navy2);border:1px solid var(--line)"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--cyan)">20</div><div style="font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5">Identificación<br>emisor</div></div>
+    <div style="text-align:center;padding:16px;background:var(--navy2);border:1px solid var(--line)"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--cyan)">20</div><div style="font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5">Claridad de la<br>solicitud</div></div>
+    <div style="text-align:center;padding:16px;background:var(--navy2);border:1px solid var(--line)"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--cyan)">20</div><div style="font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5">Respuesta /<br>autorización</div></div>
+    <div style="text-align:center;padding:16px;background:var(--navy2);border:1px solid var(--line)"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--cyan)">20</div><div style="font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5">Confirmación<br>de cierre</div></div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+    <span class="level-chip lc-green">≥80 Saludable</span>
+    <span class="level-chip lc-gold">≥60 Aceptable</span>
+    <span class="level-chip lc-orange">≥40 Bajo</span>
+    <span class="level-chip lc-red">&lt;40 Crítico</span>
+  </div>
+</div>
+</div>
+
+<!-- 04 VISIBILIDAD -->
+<div class="page" id="page-visibilidad">
+<div class="container">
+  <div class="section-label">04 — Visibilidad operacional</div>
+  <div class="section-title">Primero se mide la calidad de las interacciones. Luego se segmenta para gestionar mejor.</div>
+  <div class="section-sub">Auditrax permite pasar de un escenario sin métricas ni trazabilidad estructurada a una vista continua del desempeño comunicacional de la faena. A partir de ahí se puede segmentar por turno, proceso, canal, área o empresa, según la necesidad del cliente.</div>
+
+  <div class="grid2" style="margin-bottom:40px">
+    <div>
+      <div class="section-label" style="margin-bottom:16px">La operación sin Auditrax</div>
+      <div class="card red" style="margin-bottom:14px">
+        <div class="card-label">Punto ciego</div>
+        <h3>No existe medición continua</h3>
+        <p>Normalmente no hay métricas diarias o por turno que permitan saber si el protocolo radial se está aplicando correctamente o si la calidad de las interacciones está empeorando.</p>
+      </div>
+      <div class="card red">
+        <div class="card-label">Gestión reactiva</div>
+        <h3>La mejora depende de percepción</h3>
+        <p>Sin trazabilidad documentada, las acciones correctivas se apoyan en apreciaciones, memoria operativa o revisión manual posterior, no en evidencia estructurada.</p>
+      </div>
+    </div>
+    <div>
+      <div class="section-label" style="margin-bottom:16px">Con Auditrax — capas de visibilidad disponibles</div>
+      <div class="steps">
+        <div class="step"><div class="step-num" style="font-size:26px;min-width:38px">→</div><div class="step-content"><h4>Por turno</h4><p>Permite comparar desempeño comunicacional entre turnos y detectar patrones operacionales o conductuales asociados a cada franja.</p></div></div>
+        <div class="step"><div class="step-num" style="font-size:26px;min-width:38px">→</div><div class="step-content"><h4>Por proceso</h4><p>Se puede diferenciar entre ingresos a áreas, coordinación de equipos, solicitudes de paso, maniobras u otras interacciones críticas definidas por el cliente.</p></div></div>
+        <div class="step"><div class="step-num" style="font-size:26px;min-width:38px">→</div><div class="step-content"><h4>Por área o canal</h4><p>Cada canal puede representar un proceso, zona o frente operativo distinto. Esto permite enfocar acciones exactamente donde está la brecha.</p></div></div>
+        <div class="step"><div class="step-num" style="font-size:26px;min-width:38px">→</div><div class="step-content"><h4>Por empresa o grupo operacional</h4><p>Si el cliente lo requiere, el sistema puede generar visibilidad segmentada por operación interna, total de contratistas y empresas específicas, siempre bajo reglas de asignación acordadas.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-label" style="margin-bottom:16px">Reportabilidad flexible según audiencia</div>
+  <table class="vis-table">
+    <thead><tr><th>Nivel</th><th>Audiencia</th><th>Lo que puede entregar Auditrax</th><th>Frecuencia</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill pill-red">Operacional</span></td><td><strong>Sala de control / líderes de turno</strong></td><td>Visualización continua, interacciones recientes, indicadores del turno y recopilación rápida de antecedentes</td><td>Continuo</td></tr>
+      <tr><td><span class="pill pill-gold">Supervisión</span></td><td><strong>Supervisores · HSEC · Prevención</strong></td><td>Reporte por turno o por área, ISR, tendencias y oportunidades de mejora</td><td>Por turno / diario</td></tr>
+      <tr><td><span class="pill pill-cyan">Gestión</span></td><td><strong>Superintendencias / jefaturas</strong></td><td>Comparativos por proceso, turno, área o empresa, con foco en priorización de acciones</td><td>Diario / semanal</td></tr>
+      <tr><td><span class="pill pill-green">Estratégico</span></td><td><strong>Gerencia / innovación / seguridad</strong></td><td>Vista consolidada, evolución de indicadores y reportes ejecutivos configurados</td><td>Semanal / mensual</td></tr>
+    </tbody>
+  </table>
+
+  <div class="divider"></div>
+  <div class="section-label" style="margin-bottom:16px">KPIs base del sistema</div>
+  <div class="grid4">
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--cyan)">ISR</div><div class="kpi-label">Índice de Salud Radial</div><div class="kpi-sub" style="color:var(--cyan)">Configurable por faena</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--red)">CDR</div><div class="kpi-label">Condiciones detectadas de riesgo</div><div class="kpi-sub" style="color:var(--red)">Segun reglas definidas</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--gold)">%SC</div><div class="kpi-label">% Sin cierre correcto</div><div class="kpi-sub" style="color:var(--gold)">Por proceso o segmento</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--green)">TDT</div><div class="kpi-label">Trazabilidad documentada total</div><div class="kpi-sub" style="color:var(--green)">Audio · texto · score</div></div>
+  </div>
+
+  <div style="margin-top:18px;padding:14px;background:rgba(255,255,255,.03);border:1px solid var(--line)">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--cyan);margin-bottom:6px">NOTA DE IMPLEMENTACIÓN</div>
+    <p style="font-size:12px;color:var(--gray);line-height:1.7">La segmentación base se realiza a partir del ID de radio, canal y reglas de asignación definidas con el cliente. Cuando una radio es compartida por más de una persona en distintos turnos, la trazabilidad individual requiere filtros o cruces adicionales para aislar adecuadamente los antecedentes.</p>
+  </div>
+</div>
+</div>
+
+<!-- 05 ENTREGABLES -->
+<div class="page" id="page-entregables">
+<div class="container">
+  <div class="section-label">05 — Entregables</div>
+  <div class="section-title">Cuatro entregables base.<br>Una misma trazabilidad.</div>
+  <div class="section-sub">Auditrax puede configurarse según la necesidad del cliente, pero su estructura base contempla cuatro niveles de salida para operación, supervisión y gestión, más una capacidad transversal de recopilación rápida de antecedentes ante eventos o incidentes.</div>
+
+  <div class="grid2" style="margin-bottom:28px">
+    <div>
+      <div class="card-label" style="margin-bottom:10px">1 · Visualización continua</div>
+      <div class="report-mockup">
+        <div class="report-header"><div class="report-title">AUDITRAX · TURNO A · EN VIVO</div><div class="report-date">04:32:17</div></div>
+        <div class="report-row"><span class="rk">ISR turno</span><span class="rv" style="color:var(--gold)">71.4 / 100</span></div>
+        <div class="report-row"><span class="rk">Interacciones</span><span class="rv">47</span></div>
+        <div class="report-row"><span class="rk">Condiciones detectadas</span><span class="rv" style="color:var(--red)">3</span></div>
+        <div style="margin-top:10px;padding:8px;background:rgba(232,57,42,.1);border-left:2px solid var(--red)"><div style="font-size:10px;color:var(--red);margin-bottom:3px">CONDICIÓN DETECTADA · 04:31</div><div style="font-size:11px;color:var(--white)">Coordinación de ingreso · sin cierre correcto</div></div>
+        <div style="margin-top:6px;padding:8px;background:rgba(0,214,127,.06)"><div style="font-size:10px;color:var(--gray);margin-bottom:2px">ÚLTIMA INTERACCIÓN</div><div style="font-size:11px;color:var(--white)">Canal autonomía · ISR 85</div></div>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--gray);line-height:1.7">Vista continua para operación o sala de control, con interacciones procesadas, indicadores del turno y acceso rápido a antecedentes documentados.</div>
+    </div>
+
+    <div>
+      <div class="card-label" style="margin-bottom:10px">2 · Reporte por turno</div>
+      <div class="report-mockup">
+        <div class="report-header"><div class="report-title">REPORTE TURNO NOCHE</div><div class="report-date">06:00:00</div></div>
+        <div class="report-row"><span class="rk">ISR promedio turno</span><span class="rv" style="color:var(--gold)">68.3 / 100</span></div>
+        <div class="report-row"><span class="rk">Interacciones</span><span class="rv">312</span></div>
+        <div class="report-row"><span class="rk">Con cierre correcto</span><span class="rv" style="color:var(--green)">61%</span></div>
+        <div class="report-row"><span class="rk">CDR</span><span class="rv" style="color:var(--red)">14</span></div>
+        <div class="report-row"><span class="rk">ISR área A1</span><span class="rv" style="color:var(--green)">74.2</span></div>
+        <div class="report-row"><span class="rk">ISR área A2</span><span class="rv" style="color:var(--gold)">61.8</span></div>
+        <div class="report-row" style="border:none"><span class="rk">Proceso más expuesto</span><span class="rv" style="color:var(--red)">Ingreso a área</span></div>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--gray);line-height:1.7">Salida para líderes y supervisión, con foco en lo ocurrido en el turno, oportunidades de mejora y antecedentes disponibles para revisión rápida.</div>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:40px">
+    <div>
+      <div class="card-label" style="margin-bottom:10px">3 · Reporte diario / segmentado</div>
+      <div class="report-mockup">
+        <div class="report-header"><div class="report-title">REPORTE DIARIO</div><div class="report-date">Miércoles 26/03</div></div>
+        <div class="report-row"><span class="rk">ISR faena</span><span class="rv" style="color:var(--gold)">71.2 / 100</span></div>
+        <div class="report-row"><span class="rk">ISR interno</span><span class="rv" style="color:var(--green)">76.4</span></div>
+        <div class="report-row"><span class="rk">ISR contratistas</span><span class="rv" style="color:var(--gold)">65.9</span></div>
+        <div class="report-row"><span class="rk">Empresa con menor ISR</span><span class="rv" style="color:var(--red)">Empresa B</span></div>
+        <div class="report-row"><span class="rk">Proceso más crítico</span><span class="rv" style="color:var(--red)">Coordinación de paso</span></div>
+        <div class="report-row" style="border:none"><span class="rk">Acción sugerida</span><span class="rv" style="color:var(--gold)">Refuerzo focalizado</span></div>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--gray);line-height:1.7">Puede emitirse por área, por empresa, por canal o por grupo operacional, según el modelo de gestión que el cliente quiera implementar.</div>
+    </div>
+
+    <div>
+      <div class="card-label" style="margin-bottom:10px">4 · Reporte ejecutivo semanal</div>
+      <div class="report-mockup">
+        <div class="report-header"><div class="report-title">RESUMEN EJECUTIVO SEMANAL</div><div class="report-date">Semana 13</div></div>
+        <div class="report-row"><span class="rk">ISR semanal</span><span class="rv" style="color:var(--green)">74.6 / 100</span></div>
+        <div class="report-row"><span class="rk">Tendencia</span><span class="rv" style="color:var(--green)">↑ +3.2 pts</span></div>
+        <div class="report-row"><span class="rk">Turno más expuesto</span><span class="rv" style="color:var(--red)">Noche</span></div>
+        <div class="report-row"><span class="rk">Proceso más recurrente</span><span class="rv" style="color:var(--gold)">Ingresos</span></div>
+        <div class="report-row"><span class="rk">Segmento destacado</span><span class="rv" style="color:var(--green)">Área autonomía</span></div>
+        <div class="report-row" style="border:none"><span class="rk">Prioridad sugerida</span><span class="rv" style="color:var(--gold)">Estandarizar cierres</span></div>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--gray);line-height:1.7">Entrega una visión compacta para jefaturas, superintendencias o gerencias, facilitando priorización sin entrar al detalle de cada interacción.</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="grid2">
+    <div class="card gold">
+      <div class="card-label">Recopilación de antecedentes</div>
+      <h3>Más rápida y ya indexada</h3>
+      <p>Ante un evento o incidente, Auditrax permite revisar audio, texto, score, canal y timestamps desde una base ya estructurada. La búsqueda no parte desde cero ni depende de escuchar grabaciones extensas manualmente.</p>
+    </div>
+    <div class="card green">
+      <div class="card-label">Aporte potencial a la investigación</div>
+      <h3>Trazabilidad previa del contexto comunicacional</h3>
+      <p>Además de la interacción puntual, el sistema puede aportar contexto del periodo previo — por ejemplo, evolución del ISR del canal, proceso, radio o segmento involucrado — siempre dentro del alcance y calidad de asignación acordados con el cliente.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:18px;padding:14px;background:rgba(255,255,255,.03);border:1px solid var(--line)">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--cyan);margin-bottom:6px">ALCANCE RELEVANTE</div>
+    <p style="font-size:12px;color:var(--gray);line-height:1.7">La trazabilidad primaria se soporta en el ID de radio. Cuando un mismo equipo es compartido por distintas personas en periodos amplios, el análisis individual requiere filtros adicionales por turno, asignación u otras fuentes de contexto para evitar conclusiones erróneas.</p>
+  </div>
+</div>
+</div>
+
+<!-- 06 BENEFICIOS -->
+<div class="page" id="page-beneficios">
+<div class="container">
+  <div class="section-label">06 — Beneficios esperados</div>
+  <div class="section-title">Visibilidad que no existía.<br>Control que sí importa.</div>
+  <div class="section-sub">Auditrax habilita monitoreo continuo automatizado, acelera la recopilación de antecedentes y entrega a cada nivel de la organización la información que necesita para actuar con criterio.</div>
+
+  <div class="grid2" style="margin-bottom:40px">
+    <div>
+      <div class="section-label" style="margin-bottom:18px">Beneficios directos desde el día uno</div>
+      <div class="steps">
+        <div class="step"><div class="step-num" style="font-size:24px;min-width:40px">→</div><div class="step-content"><h4>Monitoreo continuo 24/7 sin intervención humana</h4><p>La faena pasa a contar con una capa de observación permanente sobre las interacciones radiales — sin depender de atención humana constante ni de monitoreo informal que solo opera en algunos turnos.</p></div></div>
+        <div class="step"><div class="step-num" style="font-size:24px;min-width:40px">→</div><div class="step-content"><h4>Antecedentes disponibles en segundos, no en horas</h4><p>Ante un evento o incidente, el audio, texto, score y timestamp de cada interacción están indexados y disponibles de inmediato. La búsqueda no parte desde cero ni depende de escuchar grabaciones extensas manualmente.</p></div></div>
+        <div class="step"><div class="step-num" style="font-size:24px;min-width:40px">→</div><div class="step-content"><h4>Interacciones más claras — menos repeticiones y ambigüedad</h4><p>Cuando el protocolo se mide y se hace visible, la calidad de las interacciones mejora. Menos mensajes mal cerrados, menos solicitudes ambiguas, menos tiempo perdido en correcciones operacionales.</p></div></div>
+        <div class="step"><div class="step-num" style="font-size:24px;min-width:40px">→</div><div class="step-content"><h4>Evidencia objetiva para gestionar cada actor</h4><p>El cliente decide si usa la visibilidad por empresa o área solo para mejora interna o también como soporte a gestión contractual. En ambos casos, las decisiones parten de datos — no de percepciones.</p></div></div>
+        <div class="step"><div class="step-num" style="font-size:24px;min-width:40px">→</div><div class="step-content"><h4>Capacitaciones con impacto medible</h4><p>Por primera vez es posible saber si una capacitación en protocolo radial tuvo efecto real. ISR antes y después de cada intervención. Evidencia objetiva para decidir qué funciona y dónde volver a reforzar.</p></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div style="padding:28px;background:rgba(232,57,42,.08);border:1px solid rgba(232,57,42,.3);margin-bottom:16px">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--red);margin-bottom:10px">EL ARGUMENTO QUE CIERRA</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--white);line-height:1.1;margin-bottom:12px">"Auditrax cuesta menos que un solo evento mal coordinado en operación."</div>
+        <p style="font-size:12px;color:var(--gray);line-height:1.7">Un evento de alto potencial con causa comunicacional — paralización, investigación regulatoria, multas, costos legales, impacto reputacional — puede superar los <strong style="color:var(--white)">$500.000 USD</strong>. El servicio anual de Auditrax es una fracción de ese costo.</p>
+      </div>
+
+      <div class="card green" style="margin-bottom:16px">
+        <div class="card-label">Lo que se empieza a medir desde el mes 1</div>
+        <h3>Indicadores que antes no existían</h3>
+        <p style="margin-bottom:16px">El primer aporte de Auditrax es crear la línea base — el primer dato objetivo de salud comunicacional que la faena ha tenido.</p>
+        <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--gray)">ISR baseline del turno noche</span><span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gold)">Dato real disponible</span></div><div style="height:3px;background:var(--line)"><div style="width:47%;height:100%;background:var(--gold)"></div></div></div>
+        <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--gray)">Cierre correcto de interacciones</span><span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--cyan)">Seguimiento continuo</span></div><div style="height:3px;background:var(--line)"><div style="width:61%;height:100%;background:var(--cyan)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--gray)">Evolución post-intervención</span><span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--green)">Mes a mes</span></div><div style="height:3px;background:var(--line)"><div style="width:0%;height:100%;background:var(--green)"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 07 PROPUESTA -->
+<div class="page" id="page-propuesta">
+<div class="container">
+  <div class="section-label">07 — Propuesta comercial</div>
+  <div class="section-title">Un servicio continuo,<br>escalable y configurable.</div>
+  <div class="section-sub">Auditrax no se plantea como una intervención spot que se instala, mejora y se retira. La propuesta es operar como un servicio permanente, con distintos niveles de profundidad según cantidad de canales, automatización requerida y nivel de acompañamiento esperado por el cliente.</div>
+
+  <div class="grid2" style="margin-bottom:32px">
+    <div>
+      <div class="section-label" style="margin-bottom:16px">Modelo de despliegue</div>
+      <div class="timeline">
+        <div class="tl-item"><div class="tl-dot"></div><div class="tl-label">Paso 1 — Piloto de entrada</div><div class="tl-title">Validación controlada en 1 a 2 canales</div><div class="tl-desc">Permite calibrar vocabulario, revisar lógica de evaluación, validar conectividad y demostrar valor con alcance acotado antes de escalar.</div></div>
+        <div class="tl-item"><div class="tl-dot"></div><div class="tl-label">Paso 2 — Servicio base</div><div class="tl-title">Operación continua automatizada</div><div class="tl-desc">El cliente obtiene reportabilidad permanente y trazabilidad documentada sobre los canales o segmentos definidos, sin depender de revisiones manuales.</div></div>
+        <div class="tl-item"><div class="tl-dot"></div><div class="tl-label">Paso 3 — Escalamiento</div><div class="tl-title">Cobertura completa de faena</div><div class="tl-desc">Se amplía a todos los canales priorizados y se incorporan capas de reportabilidad o segmentación adicionales según el modelo de gestión del cliente.</div></div>
+        <div class="tl-item"><div class="tl-dot"></div><div class="tl-label">Paso 4 — Acompañamiento avanzado</div><div class="tl-title">Soporte experto y mejora continua</div><div class="tl-desc">Además de reportes automáticos, el servicio puede incorporar reuniones, visitas y apoyo analítico para orientar acciones que mejoren el desempeño comunicacional.</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div style="padding:12px 16px;background:rgba(255,255,255,.03);border:1px solid var(--line);margin-bottom:16px">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--cyan);margin-bottom:6px">IMPLEMENTACIÓN INICIAL</div>
+        <div style="font-size:13px;color:var(--gray);line-height:1.7">Primer paso de validación controlada en 1 a 2 canales. Permite calibrar vocabulario, validar conectividad y generar el baseline oficial antes de escalar al servicio permanente.</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px">
+        <div class="price-card">
+          <div class="price-name">Estándar</div>
+          <div class="price-val">$3.500</div>
+          <div class="price-unit">USD / mes · hasta 20 canales</div>
+          <div class="price-feat">✓ Reportabilidad automática<br>✓ Trazabilidad documentada<br>✓ Dashboard tiempo real<br>✓ Salida por turno / diario<br>✓ Soporte técnico</div>
+        </div>
+        <div class="price-card featured">
+          <div class="price-name">Enterprise</div>
+          <div class="price-val">$5.000</div>
+          <div class="price-unit">USD / mes · hasta 50 canales</div>
+          <div class="price-feat">✓ Cobertura completa de canales<br>✓ Segmentación por actor<br>✓ Reportes ejecutivos<br>✓ 4 reportes trimestrales<br>✓ Soporte técnico prioritario</div>
+        </div>
+        <div class="price-card">
+          <div class="price-name">Enterprise+</div>
+          <div class="price-val">$8.000+</div>
+          <div class="price-unit">USD / mes · acompañamiento experto</div>
+          <div class="price-feat">✓ Todo plan Enterprise<br>✓ Reuniones periódicas<br>✓ Análisis y recomendaciones<br>✓ Visitas a faena opcionales<br>✓ Reportes a medida</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-label">Lo que incluye la base del servicio</div>
+        <p style="line-height:2.2;font-size:13px">✓ Captura y procesamiento del alcance definido<br>✓ Calibración del vocabulario técnico de la faena<br>✓ Dashboard y reportes automáticos configurados<br>✓ Trazabilidad documentada de interacciones<br>✓ Recopilación rápida de antecedentes ante eventos<br>✓ Soporte técnico según nivel contratado</p>
+      </div>
+      <div style="padding:14px;background:rgba(0,194,255,.05);border:1px solid rgba(0,194,255,.2)">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--cyan);margin-bottom:5px">PRIMER PASO RECOMENDADO</div>
+        <p style="font-size:12px;color:var(--gray);line-height:1.6">Comenzar con un alcance acotado para validar la configuración del sistema y luego escalar al nivel de servicio continuo que mejor se ajuste a la operación.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px">
+    <div style="text-align:center;padding:24px;background:var(--navy2);border:1px solid var(--line)">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--red);line-height:1">$0</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:6px;line-height:1.5">Costo del evento<br>que no ocurre</div>
+    </div>
+    <div style="text-align:center;padding:24px;background:var(--navy2);border:1px solid var(--line)">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--cyan);line-height:1">30</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:6px;line-height:1.5">Días para tener<br>el baseline oficial</div>
+    </div>
+    <div style="text-align:center;padding:24px;background:var(--navy2);border:1px solid var(--line)">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--green);line-height:1">1</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:6px;line-height:1.5">Reunión para<br>arrancar</div>
+    </div>
+  </div>
+
+  <div style="padding:20px 24px;background:rgba(0,194,255,.05);border:1px solid rgba(0,194,255,.2);margin-bottom:20px">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--cyan);margin-bottom:6px">GARANTÍA DE VALOR</div>
+    <p style="font-size:12px;color:var(--gray);line-height:1.6">Si al cabo de 90 días el sistema no ha generado al menos 3 hallazgos operacionales concretos y accionables, revisamos las condiciones del contrato.</p>
+  </div>
+
+  <div style="padding:26px;background:var(--navy2);border:1px solid var(--cyan);display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap">
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--cyan);margin-bottom:5px">PRÓXIMO PASO</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;color:var(--white);line-height:1;margin-bottom:6px">Ver Auditrax funcionando<br>con datos reales de operación</div>
+      <div style="font-size:13px;color:var(--gray)">Para revisar alcance, arquitectura y nivel de servicio más adecuado para la faena</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:var(--white);margin-bottom:4px">Auditrax</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gray)">Control operacional de comunicaciones</div>
+      <div style="margin-top:6px;font-family:'DM Mono',monospace;font-size:11px;color:var(--cyan)">auditrax.cl</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function showTab(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const map={resumen:0,problema:1,solucion:2,como:3,visibilidad:4,entregables:5,beneficios:6,propuesta:7};
+  document.querySelectorAll('.tab-btn')[map[id]].classList.add('active');
+  if(id==='como'){setTimeout(()=>{document.querySelectorAll('.score-fill').forEach(el=>{const w=el.style.width;el.style.width='0';setTimeout(()=>{el.style.width=w},50)})},100)}
+}
+window.addEventListener('load',()=>{document.querySelectorAll('.score-fill').forEach(el=>{const w=el.style.width;el.style.width='0';setTimeout(()=>{el.style.width=w},400)})});
+</script>
+</body>
+</html>
